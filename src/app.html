@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+		<script>
+			window.onerror = function(msg, src, line, col, err) {
+				document.body.innerHTML = '<pre style="color:#f88;background:#111;padding:20px;font-size:13px;white-space:pre-wrap">'
+					+ 'JS ERROR\n' + msg + '\n' + src + ':' + line + '\n' + (err && err.stack ? err.stack : '')
+					+ '</pre>';
+			};
+			window.addEventListener('unhandledrejection', function(e) {
+				document.body.innerHTML = '<pre style="color:#f88;background:#111;padding:20px;font-size:13px;white-space:pre-wrap">'
+					+ 'UNHANDLED REJECTION\n' + (e.reason && e.reason.stack ? e.reason.stack : String(e.reason))
+					+ '</pre>';
+			});
+		</script>
+	</body>
+</html>

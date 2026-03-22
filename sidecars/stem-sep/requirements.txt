@@ -1,0 +1,8 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+demucs>=4.0.1
+# PyTorch: install separately for your CUDA version, e.g.:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# CPU-only: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+spleeter>=2.3.0
+python-multipart>=0.0.12

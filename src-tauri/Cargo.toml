@@ -1,0 +1,46 @@
+[package]
+name = "musicstudio"
+version = "0.1.0"
+description = "AI-powered open-source music studio"
+authors = ["Lorelei Noble <lorelei@arynwood.com>"]
+license = "MIT"
+repository = "https://github.com/SkyeVault/MusicStudio"
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "musicstudio_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "musicstudio"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+anyhow = "1"
+log = "0.4"
+env_logger = "0.11"
+directories = "5"
+sha2 = "0.10"
+hex = "0.4"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+opt-level = "s"   # optimize for size in release
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"

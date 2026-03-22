@@ -1,0 +1,10 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pedalboard>=0.7.7,<0.9.0    # >=0.9 requires AVX2; use 0.7.x for broad CPU compat
+matchering>=2.0.6
+basic-pitch>=0.3.0           # pulls in tensorflow 2.15; requires Python 3.11 (not 3.12)
+librosa>=0.10.0
+numpy>=1.24.0
+soundfile>=0.12.0
+python-multipart>=0.0.12
+setuptools<70                # pkg_resources needed by resampy (matchering dep)

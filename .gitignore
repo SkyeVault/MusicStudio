@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.svelte-kit/
+
+# Build output
+build/
+dist/
+
+# Rust build
+src-tauri/target/
+
+# Python
+sidecars/*/venv/
+sidecars/**/__pycache__/
+sidecars/**/*.pyc
+*.egg-info/
+
+# Tauri
+src-tauri/gen/
+
+# Environment
+.env
+.env.*
+
+# Editor
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
