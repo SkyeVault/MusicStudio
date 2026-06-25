@@ -1,3 +1,11 @@
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
-# Phase 3: add RVC, GPT-SoVITS dependencies here
+python-multipart>=0.0.12
+# RVC v3 voice conversion. MUST use Python 3.11 (rvc-python pins numpy<=1.23.5
+# and fairseq==0.12.2, neither of which builds on Python 3.12).
+# rvc-python's omegaconf==2.0.6 dependency has metadata pip>=24.1 rejects —
+# install with `pip<24.1` in this venv (see CLAUDE.md).
+rvc-python==0.1.5
+# GPT-SoVITS (text/singing synthesis) is NOT included — no pip package
+# exists; it requires vendoring the full https://github.com/RVC-Boss/GPT-SoVITS
+# repo. Left out of scope for now.

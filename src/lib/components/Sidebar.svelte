@@ -12,6 +12,11 @@
 		// Arrange
 		{ id: 'timeline',     icon: '◼',  label: 'Timeline',   group: 'arrange' },
 		{ id: 'stem-sep',     icon: '✂',  label: 'Stems',      group: 'arrange', sidecar: 'stem-sep' },
+		// Video Studio — kept as its own group so video/recording/AI-caption
+		// features aren't buried among the audio tools.
+		{ id: 'video-preview', icon: '🎬', label: 'Preview',   group: 'video' },
+		{ id: 'screen-record', icon: '⏺',  label: 'Record',    group: 'video' },
+		{ id: 'captions',     icon: '📝', label: 'Captions',   group: 'video',   sidecar: 'video-ai' },
 		// MIDI
 		{ id: 'piano-roll',   icon: '🎹', label: 'Piano Roll', group: 'midi' },
 		{ id: 'transcribe',   icon: '🎼', label: 'Transcribe', group: 'midi',    sidecar: 'audio-fx' },
@@ -24,6 +29,7 @@
 		{ id: 'backing',      icon: '🎵', label: 'Backing',    group: 'ai',      sidecar: 'song-gen' },
 		// System
 		{ id: 'models',       icon: '📦', label: 'Models',     group: 'system' },
+		{ id: 'diagnostics',  icon: '🩺', label: 'Diagnose',   group: 'system' },
 	];
 
 	function statusColor(status: string): string {
@@ -52,6 +58,7 @@
 	// Group labels
 	const GROUP_LABELS: Record<string, string> = {
 		arrange: 'Arrange',
+		video:   'Video Studio',
 		midi:    'MIDI',
 		fx:      'Effects',
 		ai:      'AI Gen',
@@ -64,7 +71,7 @@
 
 <aside class="sidebar">
 	{#each groups as group}
-		<div class="group-label">{GROUP_LABELS[group] ?? group}</div>
+		<div class="group-label" class:highlight={group === 'video'}>{GROUP_LABELS[group] ?? group}</div>
 		{#each panels.filter((p) => (p.group ?? 'other') === group) as panel}
 			<button
 				class="nav-item"
@@ -114,6 +121,10 @@
 		text-transform: uppercase;
 		letter-spacing: 0.8px;
 		padding: 8px 6px 2px;
+	}
+
+	.group-label.highlight {
+		color: var(--accent-hover);
 	}
 
 	.nav-item {

@@ -13,6 +13,7 @@ pub enum SidecarId {
     AudioFx,
     SongGen,
     StemSep,
+    VideoAi,
 }
 
 impl SidecarId {
@@ -22,6 +23,7 @@ impl SidecarId {
             SidecarId::AudioFx => 8002,
             SidecarId::SongGen => 8003,
             SidecarId::StemSep => 8004,
+            SidecarId::VideoAi => 8005,
         }
     }
 
@@ -31,6 +33,7 @@ impl SidecarId {
             SidecarId::AudioFx => "audio-fx",
             SidecarId::SongGen => "song-gen",
             SidecarId::StemSep => "stem-sep",
+            SidecarId::VideoAi => "video-ai",
         }
     }
 
@@ -40,6 +43,7 @@ impl SidecarId {
             SidecarId::AudioFx => "audio-fx",
             SidecarId::SongGen => "song-gen",
             SidecarId::StemSep => "stem-sep",
+            SidecarId::VideoAi => "video-ai",
         }
     }
 }

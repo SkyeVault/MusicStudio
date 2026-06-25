@@ -7,14 +7,20 @@
 	import { startSidecar, startHealthPolling, updateSidecarStatus, type SidecarId } from '$lib/stores/sidecarStore';
 	import { invoke } from '@tauri-apps/api/core';
 	import { save } from '@tauri-apps/plugin-dialog';
-	import { activeTasks } from '$lib/stores/aiTaskStore';
+	import { activeTasks, createTask, updateTask, completeTask, failTask } from '$lib/stores/aiTaskStore';
 	import { activePanelStore } from '$lib/stores/uiStore';
+	import { transportStore, setPosition } from '$lib/stores/transportStore';
 
 	import Transport from '$lib/components/Transport.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import StatusBar from '$lib/components/StatusBar.svelte';
 
 	import Timeline from '$lib/components/Timeline.svelte';
+	import VideoPreview from '$lib/components/VideoPreview.svelte';
+	import ScreenRecorder from '$lib/components/ScreenRecorder.svelte';
+	import Captions from '$lib/components/Captions.svelte';
+	import Diagnostics from '$lib/components/Diagnostics.svelte';
+	import Voice from '$lib/components/Voice.svelte';
 	import StemSeparator from '$lib/components/StemSeparator.svelte';
 	import EffectsRack from '$lib/components/EffectsRack.svelte';
 	import PianoRoll from '$lib/components/PianoRoll.svelte';
@@ -24,6 +30,9 @@
 
 	let healthPollInterval: ReturnType<typeof setInterval>;
 	let unlisten: (() => void) | undefined;
+	let unlistenRenderProgress: (() => void) | undefined;
+	let renderTaskId: string | null = null;
+	let positionSyncRaf: number;
 
 	onMount(async () => {
 		await audioEngine.init();
@@ -37,12 +46,30 @@
 				status as 'stopped' | 'starting' | 'running' | 'degraded' | 'error'
 			);
 		});
+
+		unlistenRenderProgress = await listen<{ progress: number }>('render-progress', (event) => {
+			if (renderTaskId) updateTask(renderTaskId, { progress: event.payload.progress });
+		});
+
+		// Tone.Transport runs its own internal clock once started, but nothing
+		// fed that clock's position back into transportStore — so the playhead,
+		// the time display, and anything synced to it (VideoPreview) just sat
+		// frozen at 0 during playback. Poll it every frame instead.
+		const syncPosition = () => {
+			if ($transportStore.playing) {
+				setPosition(audioEngine.positionSeconds, $projectStore.bpm);
+			}
+			positionSyncRaf = requestAnimationFrame(syncPosition);
+		};
+		positionSyncRaf = requestAnimationFrame(syncPosition);
 	});
 
 	onDestroy(() => {
 		audioEngine.dispose();
 		clearInterval(healthPollInterval);
 		unlisten?.();
+		unlistenRenderProgress?.();
+		cancelAnimationFrame(positionSyncRaf);
 	});
 
 	$: audioEngine.bpm = $projectStore.bpm;
@@ -83,6 +110,25 @@
 		const wav = audioBufferToWav(rendered);
 		await invoke('export_wav', { outputPath, audioData: Array.from(new Uint8Array(wav)) });
 		alert(`Exported to ${outputPath}`);
+	}
+
+	async function exportVideo() {
+		const outputPath = await save({
+			filters: [{ name: 'MP4 Video', extensions: ['mp4'] }],
+			defaultPath: `${$projectStore.name}.mp4`
+		});
+		if (!outputPath) return;
+
+		renderTaskId = createTask('video-export', `Rendering ${$projectStore.name}`);
+		updateTask(renderTaskId, { status: 'running' });
+		try {
+			await invoke('render_video_project', { project: $projectStore, outputPath });
+			completeTask(renderTaskId, outputPath);
+		} catch (e) {
+			failTask(renderTaskId, String(e));
+		} finally {
+			renderTaskId = null;
+		}
 	}
 
 	function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
@@ -130,6 +176,7 @@
 		<nav class="menu-bar">
 			<button on:click={() => invoke('save_project', { project: $projectStore })}>Save</button>
 			<button on:click={exportMix} disabled={$projectStore.tracks.length === 0}>Export WAV</button>
+			<button on:click={exportVideo} disabled={!$projectStore.tracks.some((t) => t.type === 'video')}>Export Video</button>
 		</nav>
 
 		<Transport />
@@ -150,6 +197,10 @@
 		<main class="main-area">
 			{#if $activePanelStore === 'timeline'}
 				<Timeline />
+			{:else if $activePanelStore === 'video-preview'}
+				<VideoPreview />
+			{:else if $activePanelStore === 'screen-record'}
+				<ScreenRecorder />
 			{:else if $activePanelStore === 'stem-sep'}
 				<StemSeparator />
 			{:else if $activePanelStore === 'fx-rack'}
@@ -160,14 +211,18 @@
 				<Transcribe />
 			{:else if $activePanelStore === 'master'}
 				<MasterPanel />
+			{:else if $activePanelStore === 'captions'}
+				<Captions />
 			{:else if $activePanelStore === 'voice'}
-				<PlaceholderPanel title="Voice Studio"   icon="🎤" description="Voice cloning with RVC v3 and GPT-SoVITS — coming in Phase 3." />
+				<Voice />
 			{:else if $activePanelStore === 'song-factory'}
 				<PlaceholderPanel title="Song Factory"   icon="✨" description="Full-song generation via DiffRhythm and YuE — coming in Phase 4." />
 			{:else if $activePanelStore === 'backing'}
 				<PlaceholderPanel title="Backing Tracks" icon="🎵" description="Text-to-music via MusicGen — coming in Phase 4." />
 			{:else if $activePanelStore === 'models'}
 				<PlaceholderPanel title="Model Library"  icon="📦" description="Download and manage AI models — coming soon." />
+			{:else if $activePanelStore === 'diagnostics'}
+				<Diagnostics />
 			{:else}
 				<Timeline />
 			{/if}

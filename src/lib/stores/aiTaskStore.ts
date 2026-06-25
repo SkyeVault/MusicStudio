@@ -9,7 +9,8 @@ export type TaskType =
 	| 'backing-generate'
 	| 'transcribe'
 	| 'master'
-	| 'effects-render';
+	| 'effects-render'
+	| 'video-export';
 
 export interface AiTask {
 	id: string;

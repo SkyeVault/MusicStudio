@@ -8,14 +8,19 @@ export interface Clip {
 	filePath: string | null;
 	name: string;
 	color: string;
-	type: 'audio' | 'midi';
+	type: 'audio' | 'midi' | 'video';
+	// Video-only fields (undefined for audio/midi clips)
+	videoInPoint?: number; // seconds into the source file where this clip starts
+	videoOutPoint?: number; // seconds into the source file where this clip ends
+	sourceDurationSeconds?: number; // full duration of the source media file
+	thumbnailPath?: string; // cached frame thumbnail for timeline rendering
 }
 
 export interface Track {
 	id: string;
 	name: string;
 	color: string;
-	type: 'audio' | 'midi' | 'instrument';
+	type: 'audio' | 'midi' | 'instrument' | 'video';
 	muted: boolean;
 	solo: boolean;
 	volume: number; // 0–1

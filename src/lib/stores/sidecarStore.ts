@@ -1,7 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 
-export type SidecarId = 'voice' | 'audio-fx' | 'song-gen' | 'stem-sep';
+export type SidecarId = 'voice' | 'audio-fx' | 'song-gen' | 'stem-sep' | 'video-ai';
 export type SidecarStatus = 'stopped' | 'starting' | 'running' | 'degraded' | 'error';
 
 export interface SidecarState {
@@ -16,7 +16,8 @@ const SIDECARS: SidecarState[] = [
 	{ id: 'audio-fx', label: 'Audio FX', port: 8002, status: 'stopped' },
 	{ id: 'voice', label: 'Voice', port: 8001, status: 'stopped' },
 	{ id: 'song-gen', label: 'Song Gen', port: 8003, status: 'stopped' },
-	{ id: 'stem-sep', label: 'Stem Sep', port: 8004, status: 'stopped' }
+	{ id: 'stem-sep', label: 'Stem Sep', port: 8004, status: 'stopped' },
+	{ id: 'video-ai', label: 'Video AI', port: 8005, status: 'stopped' }
 ];
 
 export const sidecarStore = writable<SidecarState[]>(SIDECARS);

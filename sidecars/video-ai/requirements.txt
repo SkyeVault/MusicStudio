@@ -1,0 +1,7 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+# faster-whisper uses CTranslate2, not TensorFlow — Python 3.12 is fine here,
+# unlike audio-fx's basic-pitch which needs Python<=3.11.
+faster-whisper>=1.0.0
+pydub>=0.25.1

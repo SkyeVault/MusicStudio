@@ -4,7 +4,7 @@
 	import { projectStore, addTrack, removeTrack, updateTrack, type Clip } from '$lib/stores/projectStore';
 	import { transportStore } from '$lib/stores/transportStore';
 	import { open } from '@tauri-apps/plugin-dialog';
-	import { convertFileSrc } from '@tauri-apps/api/core';
+	import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 
 	// Map from clip.id → WaveSurfer instance
 	let waveInstances: Map<string, WaveSurfer> = new Map();
@@ -94,6 +94,64 @@
 		}));
 	}
 
+	async function addVideoTrack() {
+		const selected = await open({
+			multiple: false,
+			filters: [{ name: 'Video', extensions: ['mp4', 'mov', 'mkv', 'webm'] }]
+		});
+		if (!selected || Array.isArray(selected)) return;
+
+		addTrack('video');
+		const tracks = $projectStore.tracks;
+		const newTrack = tracks[tracks.length - 1];
+		const name = selected.split('/').pop() ?? 'Video';
+
+		let duration = 0;
+		let thumbnailPath: string | undefined;
+		try {
+			duration = await invoke<number>('probe_media_duration', { filePath: selected });
+		} catch (e) {
+			console.error('Failed to probe video duration:', e);
+		}
+		try {
+			thumbnailPath = await invoke<string>('generate_video_thumbnail', { filePath: selected });
+		} catch (e) {
+			console.error('Failed to generate video thumbnail:', e);
+		}
+
+		const bpm = $projectStore.bpm;
+		const durationBeats = duration > 0 ? duration * (bpm / 60) : 64;
+
+		projectStore.update((p) => ({
+			...p,
+			dirty: true,
+			tracks: p.tracks.map((t) =>
+				t.id === newTrack.id
+					? {
+							...t,
+							name,
+							clips: [
+								{
+									id: crypto.randomUUID(),
+									trackId: t.id,
+									startBeat: 0,
+									durationBeats,
+									filePath: selected,
+									name,
+									color: t.color,
+									type: 'video' as const,
+									videoInPoint: 0,
+									videoOutPoint: duration,
+									sourceDurationSeconds: duration,
+									thumbnailPath
+								}
+							]
+					  }
+					: t
+			)
+		}));
+	}
+
 	onDestroy(() => {
 		for (const ws of waveInstances.values()) ws.destroy();
 	});
@@ -142,7 +200,17 @@
 					{#each track.clips as clip (clip.id)}
 						<div class="clip" style="border-color: {clip.color}">
 							<span class="clip-name">{clip.name}</span>
-							<div class="waveform-container" use:waveformAction={clip.id}></div>
+							{#if clip.type === 'video'}
+								<div class="video-thumb-container">
+									{#if clip.thumbnailPath}
+										<img class="video-thumb" src={convertFileSrc(clip.thumbnailPath)} alt={clip.name} />
+									{:else}
+										<div class="video-thumb-placeholder">🎬</div>
+									{/if}
+								</div>
+							{:else}
+								<div class="waveform-container" use:waveformAction={clip.id}></div>
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -150,13 +218,18 @@
 		{/each}
 	</div>
 
-	<button class="add-track-btn" on:click={addAudioTrack}>
-		+ Add Audio Track
-	</button>
+	<div class="add-track-row">
+		<button class="add-track-btn" on:click={addAudioTrack}>
+			+ Add Audio Track
+		</button>
+		<button class="add-track-btn" on:click={addVideoTrack}>
+			+ Add Video Track
+		</button>
+	</div>
 
 	{#if tracks.length === 0}
 		<div class="empty-state">
-			<p>Click <strong>+ Add Audio Track</strong> to load an audio file and get started.</p>
+			<p>Click <strong>+ Add Audio Track</strong> or <strong>+ Add Video Track</strong> to load media and get started.</p>
 		</div>
 	{/if}
 </div>
@@ -280,8 +353,37 @@
 		flex: 1;
 	}
 
-	.add-track-btn {
+	.video-thumb-container {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		overflow: hidden;
+		border-radius: 3px;
+		background: rgba(0, 0, 0, 0.2);
+	}
+
+	.video-thumb {
+		height: 100%;
+		width: auto;
+		object-fit: cover;
+	}
+
+	.video-thumb-placeholder {
+		width: 100%;
+		text-align: center;
+		font-size: 18px;
+		color: var(--text-muted);
+	}
+
+	.add-track-row {
+		display: flex;
+		gap: 8px;
 		margin: 8px;
+	}
+
+	.add-track-btn {
+		flex: 1;
+		margin: 0;
 		padding: 8px;
 		border: 1px dashed var(--border);
 		border-radius: 6px;
